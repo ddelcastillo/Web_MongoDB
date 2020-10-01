@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
 const Joi = require("joi");
-const Message = require("../models/message");
 const messages = require("../controllers/message");
 
 const validateMessage = (msg) => {
@@ -17,7 +16,7 @@ const validateMessage = (msg) => {
 
 router.get("/", function (req, res, next) {
   messages.getMessages((result) => {
-    res.send(result);
+    res.status(200).send(result);
   });
 });
 
@@ -26,8 +25,8 @@ router.get("/:ts", function (req, res, next) {
     if (!result)
       return res
         .status(404)
-        .send("The message with the given ID is not found.");
-    res.send(result);
+        .send("The message with the given timestamp doesn't exist.");
+    res.status(200).send(result);
   });
 });
 
@@ -36,13 +35,8 @@ router.post("/", function (req, res, next) {
   if (error) {
     return res.status(400).send("Invalid message.");
   }
-  const newMessage = {
-    message: req.body.message,
-    ts: req.body.ts,
-    author: req.body.author,
-  };
-  messages.createMessage(newMessage);
-  res.send(newMessage);
+  messages.createMessage(req.body);
+  res.status(200).send(req.body);
 });
 
 router.put("/:ts", function (req, res, next) {
@@ -62,6 +56,7 @@ router.put("/:ts", function (req, res, next) {
 router.delete("/:ts", function (req, res, next) {
   let ts = req.body.ts;
   messages.deleteMessage(ts);
+  res.send("Deleted.");
 });
 
 module.exports = router;

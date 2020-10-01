@@ -29,7 +29,7 @@ const getMessage = (ts, callback) => {
 
 const createMessage = (msg) => {
   conn.then((client) => {
-    client.db(db).collections(messages_collection).insertOne(msg);
+    client.db(db).collection(messages_collection).insertOne(msg);
   });
 };
 
@@ -37,14 +37,21 @@ const updateMessage = (msg) => {
   conn.then((client) => {
     client
       .db(db)
-      .collections(messages_collection)
+      .collection(messages_collection)
       .updateOne({ ts: msg.ts }, { $set: msg });
   });
 };
 
-const deleteMessage = (msg) => {
+const deleteMessage = (id) => {
   conn.then((client) => {
-    client.db(db).collections(messages_collection).deleteOne({ ts: msg.ts });
+    client
+      .db(db)
+      .collection(messages_collection)
+      .deleteOne({ ts: id })
+      .then((result) => {})
+      .catch((err) => {
+        console.log(err);
+      });
   });
 };
 
