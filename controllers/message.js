@@ -64,7 +64,7 @@ const deleteMessage = (id, callback) => {
   });
 };
 
-const messages = {
+const messages_controller = {
   getMessages,
   getMessage,
   createMessage,
@@ -72,4 +72,4 @@ const messages = {
   deleteMessage,
 };
 
-module.exports = messages;
+module.exports = messages_controller;

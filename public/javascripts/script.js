@@ -12,7 +12,14 @@ const renderMessages = (data) => {
 const handleSubmit = (evt) => {
   evt.preventDefault();
   const message = document.getElementById("message");
-  ws.send(message.value);
+  const author = document.getElementById("author");
+  ws.send(
+    JSON.stringify({
+      message: message.value,
+      author: author.value,
+    })
+  );
+  author.value = "";
   message.value = "";
 };
 
