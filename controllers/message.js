@@ -15,40 +15,49 @@ const getMessages = (callback) => {
   });
 };
 
-const getMessage = (ts, callback) => {
+const getMessage = (id, callback) => {
   conn.then((client) => {
     client
       .db(db)
       .collection(messages_collection)
-      .findOne({ ts: ts })
+      .findOne({ ts: id })
       .then((result) => {
         callback(result);
       });
   });
 };
 
-const createMessage = (msg) => {
-  conn.then((client) => {
-    client.db(db).collection(messages_collection).insertOne(msg);
-  });
-};
-
-const updateMessage = (msg) => {
+const createMessage = (msg, callback) => {
   conn.then((client) => {
     client
       .db(db)
       .collection(messages_collection)
-      .updateOne({ ts: msg.ts }, { $set: msg });
+      .insertOne(msg)
+      .then((result) => callback(result));
   });
 };
 
-const deleteMessage = (id) => {
+const updateMessage = (id, msg, callback) => {
+  conn.then((client) => {
+    client
+      .db(db)
+      .collection(messages_collection)
+      .updateOne({ ts: id }, { $set: msg })
+      .then((result) => {
+        callback(result);
+      });
+  });
+};
+
+const deleteMessage = (id, callback) => {
   conn.then((client) => {
     client
       .db(db)
       .collection(messages_collection)
       .deleteOne({ ts: id })
-      .then((result) => {})
+      .then((result) => {
+        callback(result);
+      })
       .catch((err) => {
         console.log(err);
       });

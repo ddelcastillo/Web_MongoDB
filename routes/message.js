@@ -2,6 +2,10 @@ const express = require("express");
 const router = express.Router();
 const Joi = require("joi");
 const messages = require("../controllers/message");
+const ws = require("../wslib");
+
+const error_400 = "Invalid message.";
+const error_404 = "No message with such timestamp exists.";
 
 const validateMessage = (msg) => {
   const schema = Joi.object({
@@ -21,11 +25,8 @@ router.get("/", function (req, res, next) {
 });
 
 router.get("/:ts", function (req, res, next) {
-  messages.getMessage(req.params.ts, (result) => {
-    if (!result)
-      return res
-        .status(404)
-        .send("The message with the given timestamp doesn't exist.");
+  messages.getMessage(Number(req.params.ts), (result) => {
+    if (!result) return res.status(404).send(error_404);
     res.status(200).send(result);
   });
 });
@@ -33,30 +34,32 @@ router.get("/:ts", function (req, res, next) {
 router.post("/", function (req, res, next) {
   const { error } = validateMessage(req.body);
   if (error) {
-    return res.status(400).send("Invalid message.");
+    return res.status(400).send(error_400);
   }
   messages.createMessage(req.body);
-  res.status(200).send(req.body);
+  res.status(201).send(req.body);
 });
 
 router.put("/:ts", function (req, res, next) {
   const { error } = validateMessage(req.body);
   if (error) {
-    return res.status(400).send("Invalid message.");
+    return res.status(400).send(error_400);
   }
-  const newMessage = {
-    message: req.body.message,
-    ts: req.body.ts,
-    author: req.body.author,
-  };
-  messages.updateMessage(req.body.ts, newMessage);
-  res.send(newMessage);
+  messages.updateMessage(Number(req.params.ts), req.body, (result) => {
+    if (result.result.n === 1) return res.status(200).send(req.body);
+    res.status(404).send(error_404);
+  });
 });
 
 router.delete("/:ts", function (req, res, next) {
-  let ts = req.body.ts;
-  messages.deleteMessage(ts);
-  res.send("Deleted.");
+  const ts = req.params.ts;
+  messages.deleteMessage(Number(ts), (result) => {
+    if (result.result.n === 1)
+      return res
+        .status(200)
+        .send("Deleted the message with the timestamp " + ts + ".");
+    else return res.status(404).send(error_404);
+  });
 });
 
 module.exports = router;
