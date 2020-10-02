@@ -29,40 +29,43 @@ router.get("/:ts", function (req, res, next) {
 });
 
 router.post("/", function (req, res, next) {
-  const { error } = schema.validate(req.body);
+  let msg = req.body;
+  msg.ts = Date.now();
+  const { error } = schema.validate(msg);
   if (error) {
     console.log(error);
     return res.status(412).send(error_412 + error.message + ".");
   }
-  messages_controller.createMessage(req.body, (result) => {
-    res.status(201).send(req.body);
+  messages_controller.createMessage(msg, (result) => {
+    res.status(201).send(msg);
     ws.sendMessages();
   });
 });
 
 router.put("/:ts", function (req, res, next) {
-  const { error } = validateMessage(req.body);
-  if (error) {
-    return res.status(412).send(error_412 + error.message + ".");
-  }
-  messages_controller.updateMessage(
-    Number(req.params.ts),
-    req.body,
-    (result) => {
-      if (result.result.n === 1) return res.status(200).send(req.body);
-      res.status(404).send(error_404);
+  let msg = req.body;
+  const { error } = schema.validate(msg);
+  if (error) return res.status(412).send(error_412 + error.message + ".");
+  msg.ts = Number(req.params.ts); // ¡No se debe modifica ts con el put!
+  messages_controller.updateMessage(Number(req.params.ts), msg, (result) => {
+    if (result.result.n === 1) {
+      ws.sendMessages();
+      return res.status(200).send(msg);
     }
-  );
+    res.status(404).send(error_404);
+  });
 });
 
 router.delete("/:ts", function (req, res, next) {
-  const ts = req.params.ts;
-  messages.deleteMessage(Number(ts), (result) => {
-    if (result.result.n === 1)
+  let ts = req.params.ts;
+  messages_controller.deleteMessage(Number(ts), (result) => {
+    if (result.result.n === 1) {
+      ws.sendMessages();
       return res
         .status(200)
         .send("Deleted the message with the timestamp " + ts + ".");
-    else return res.status(404).send(error_404);
+    }
+    res.status(404).send(error_404);
   });
 });
 
